@@ -3,7 +3,7 @@
 ## Installation instructions
 
 ```
-pip install flask requests
+pip install -r requirements.txt
 ```
 
 ## Run
