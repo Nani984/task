@@ -1,6 +1,8 @@
 
 from flask import Flask, jsonify, request
 import json
+import sys
+
 
 app = Flask(__name__)
 
@@ -101,6 +103,7 @@ def group_create():
     }
     '''
     groups.append(request.json)
+    print(groups)
     return "success",201
 
 # @app.route('/group', methods=['POST', 'PUT'])
@@ -131,7 +134,7 @@ def create_expense():
     '''
     input data
     {
-        "group_name" : "home"
+        "group_name" : "Home",
         "expense" :  {
                     "name": "Fruits and Milk",
                     "items": [{"name": "milk", "value": 50, "paid_by": [{"A": 40, "B": 10}], "owed_by": [{"A": 20,"B": 20, "C": 10}]},
@@ -145,7 +148,6 @@ def create_expense():
                 if groups[g].get('expenses') == None:
                     groups[g]['expenses'] = []
                 groups[g]['expenses'].append(request.json['expense'])
-
                 # adding a new person
                 for item in request.json['expense']['items']:
                     item_paid_bys = item['paid_by']
@@ -158,11 +160,8 @@ def create_expense():
                         for key in p: # p is dict
                             if key not in groups[g]['members']:
                                 groups[g]['members'].append(key)
-
-
-            
-            
-        return "success", 201
+        print(groups)
+        return "success", 201 
         
     elif request.method == 'PUT':
         for g in range(len(groups)):
@@ -217,7 +216,7 @@ def create_expense():
         return x, 200
         
 
-@app.route('/balance', methods=['POST'])
+@app.route('/balance', methods=['POST', 'GET'])
 def get_balance():
     '''
     request.json input=>
@@ -226,64 +225,76 @@ def get_balance():
     }
     
     '''
+    #x = 0
+    balance_sheet = {}
+    
+    print("groups is ",groups)
     for g in range(len(groups)):
         if request.json['group'] == groups[g]['name']:
-            break
+            # print(g)
+            # x = g
             # create a balance sheet
-    for mem in groups[g]['members']:
-        amount_paid = 0
-        amount_owed = 0
-        # paid - purchased = amount received (+ve : will get money, -ve: will give money)
-        dict_balance = {}
-        for ex in groups[g]['expenses']:
-            for item in ex["items"]:
-                amount_paid_by_all = item['paid_by']
-                for a in amount_paid_by_all:
-                    amount_paid = amount_paid + a.get(mem,0)
+            dict_balance = {}
+            for mem in groups[g]['members']:
+                amount_paid = 0
+                amount_owed = 0
+                # paid - purchased = amount received (+ve : will get money, -ve: will give money)
+                for ex in groups[g]['expenses']:
+                    for item in ex["items"]:
+                        amount_paid_by_all = item['paid_by']
+                        for a in amount_paid_by_all:
+                            amount_paid = amount_paid + a.get(mem,0)
         
-                if g in dict_balance:
-                    dict_balance[mem]['paid_by'] =  dict_balance[mem]['paid_by'] + amount_paid
-                else:
-                    dict_balance[mem] = {}
-                    dict_balance[mem]['paid_by'] = amount_paid
-                    dict_balance[mem]['owed_by'] = 0
+                        if g in dict_balance:
+                            dict_balance[mem]['paid_by'] =  dict_balance[mem]['paid_by'] + amount_paid
+                        else:
+                            dict_balance[mem] = {}
+                            dict_balance[mem]['paid_by'] = amount_paid
+                            dict_balance[mem]['owed_by'] = 0
         
-                amount_owed_by_all = item['owed_by']
-                for a in amount_owed_by_all:
-                    amount_owed = amount_owed + a.get(mem,0)
-                dict_balance[mem]['owed_by'] = dict_balance[mem]['owed_by'] + amount_owed
+                        amount_owed_by_all = item['owed_by']
+                        for a in amount_owed_by_all:
+                            amount_owed = amount_owed + a.get(mem,0)
+                        dict_balance[mem]['owed_by'] = dict_balance[mem]['owed_by'] + amount_owed
     
 
-    net_balance_dict = {}
-
-    for mem in groups[g]['members']:
-        net_balance_dict[g] = dict_balance[g]['paid_by'] - dict_balance[g]['owed_by']
-
-    balance_sheet = {}
-
-    loan_sheet = {}
-    for person,net_bal in net_balance_dict.items():
-        print(person, net_bal)
-        loan_sheet[person] = {}
-        loan_sheet[person]['owes_to'] = []
-        loan_sheet[person]['owed_by'] = []
-        loan_sheet[person]['total_balance'] = net_bal
-        if net_bal > 0:
-            loan_sheet[person]['owes_to'] = []
+            net_balance_dict = {}
+            print("--------------------------------------------------dict balance 00",dict_balance)
             for mem in groups[g]['members']:
-                if mem != person and net_balance_dict[mem] < 0:
-                    loan_sheet[person]['owed_by'].append({mem: abs(net_balance_dict[g])})
-        elif net_bal < 0:
-            loan_sheet[person]['owed_by'] = []
-            for mem in groups[g]['members']:
-                if mem != person and net_balance_dict[mem] > 0:
-                    loan_sheet[person]['owes_to'].append({mem: abs(net_balance_dict[person])})
+                net_balance_dict[mem] = dict_balance[mem]['paid_by'] - dict_balance[mem]['owed_by']
+                net_balance_dict[mem] = dict_balance[mem]['paid_by'] - dict_balance[mem]['owed_by']
 
-    balance_sheet['name'] = "home"
-    balance_sheet['balances'] = loan_sheet
-    groups[g]['balance_sheet'] = balance_sheet
+            
 
+            loan_sheet = {}
+            for person,net_bal in net_balance_dict.items():
+                print(person, net_bal)
+                loan_sheet[person] = {}
+                loan_sheet[person]['owes_to'] = []
+                loan_sheet[person]['owed_by'] = []
+                loan_sheet[person]['total_balance'] = net_bal
+                if net_bal > 0:
+                    loan_sheet[person]['owes_to'] = []
+                    for mem in groups[g]['members']:
+                        if mem != person and net_balance_dict[mem] < 0:
+                            print("loan_sheet ",loan_sheet)
+                            print("person ",person)
+                            print("net_balance_dict ",net_balance_dict)
+                            print("g ",g)
+                            loan_sheet[person]['owed_by'].append({mem: abs(net_balance_dict[mem])})
+                elif net_bal < 0:
+                    loan_sheet[person]['owed_by'] = []
+                    for mem in groups[g]['members']:
+                        if mem != person and net_balance_dict[mem] > 0:
+                            loan_sheet[person]['owes_to'].append({mem: abs(net_balance_dict[person])})
+
+            balance_sheet['name'] = request.json['group']
+            balance_sheet['balances'] = loan_sheet
+            groups[g]['balance_sheet'] = balance_sheet
     return balance_sheet,200
+            
+
+    
             
  
 if __name__ == '__main__':
