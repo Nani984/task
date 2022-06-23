@@ -290,7 +290,7 @@ def get_balance():
 
             balance_sheet['name'] = request.json['group']
             balance_sheet['balances'] = loan_sheet
-            groups[g]['balance_sheet'] = balance_sheet
+            groups[g]['balance_sheet'] = balance_sheet['balances']
     return "success",200
             
 
