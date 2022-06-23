@@ -207,8 +207,8 @@ def create_expense():
         }
         '''
         x = "None"
-        print(request.json)
-        print(groups)
+        #print(request.json)
+        #print(groups)
         for g in groups:
             if g['name'] == request.json['group_name']:
                 print("ikkada ochinda")
@@ -216,7 +216,7 @@ def create_expense():
         return x, 200
         
 
-@app.route('/balance', methods=['POST', 'GET'])
+@app.route('/balance', methods=['POST'])
 def get_balance():
     '''
     request.json input=>
@@ -291,7 +291,7 @@ def get_balance():
             balance_sheet['name'] = request.json['group']
             balance_sheet['balances'] = loan_sheet
             groups[g]['balance_sheet'] = balance_sheet
-    return balance_sheet,200
+    return "success",200
             
 
     
