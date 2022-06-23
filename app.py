@@ -211,7 +211,6 @@ def create_expense():
         #print(groups)
         for g in groups:
             if g['name'] == request.json['group_name']:
-                print("ikkada ochinda")
                 x = g.get(g['balance_sheet'], "None")
         return x, 200
         
@@ -259,7 +258,7 @@ def get_balance():
     
 
             net_balance_dict = {}
-            print("--------------------------------------------------dict balance 00",dict_balance)
+            #print("--------------------------------------------------dict balance 00",dict_balance)
             for mem in groups[g]['members']:
                 net_balance_dict[mem] = dict_balance[mem]['paid_by'] - dict_balance[mem]['owed_by']
                 net_balance_dict[mem] = dict_balance[mem]['paid_by'] - dict_balance[mem]['owed_by']
@@ -268,7 +267,7 @@ def get_balance():
 
             loan_sheet = {}
             for person,net_bal in net_balance_dict.items():
-                print(person, net_bal)
+                #print(person, net_bal)
                 loan_sheet[person] = {}
                 loan_sheet[person]['owes_to'] = []
                 loan_sheet[person]['owed_by'] = []
@@ -290,7 +289,7 @@ def get_balance():
 
             balance_sheet['name'] = request.json['group']
             balance_sheet['balances'] = loan_sheet
-            groups[g]['balance_sheet'] = balance_sheet['balances']
+            groups[g]['balance_sheet'] = balance_sheet
     return "success",200
             
 
